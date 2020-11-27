@@ -25,7 +25,29 @@
       <version>4.11</version>
       <scope>test</scope>
     </dependency>
+
+<!-- jap hibernate -->
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-entitymanager</artifactId>
+      <version>5.4.24.Final</version>
+    </dependency>
+    
+    <!-- mysql connector -->
+    <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.22</version>
+</dependency>
+
+
   </dependencies>
+
+
+
+
+
 
   <build>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
