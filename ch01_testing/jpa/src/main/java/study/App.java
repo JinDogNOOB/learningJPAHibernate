@@ -30,6 +30,7 @@ public class App
      */
     public static void main( String[] args )
     {
+        System.out.println(RoleType.ADMIN);
         // 엔티티 매니저 팩토리 생성
         EntityManagerFactory emf = Persistence.createEntityManagerFactory("test_unit");
 
@@ -84,5 +85,7 @@ public class App
         System.out.println("members size = " + members.size());
 
         em.remove(member);
+
+        
     }
 }
