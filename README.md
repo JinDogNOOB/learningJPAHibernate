@@ -115,9 +115,55 @@
     - 보통 엔티티 하나에 하나의 테이블을 매핑하는데, 여러 테이블을 매핑하는 방법, 별로 안쓴다고함
 
 
-## ch07
+## ch08
 * 프록시 & 연관관계 관리
 * 프록시와 즉시로딩, 지연로딩
     - 객체는 객체 그래프로 연관된 객체들을 탐색, 그런데 객체가 데이터베이스에 저장되어 있으므로 연관된 객체를 마음껏 탐색하기는 어려움, JPA 구현체들은 이 문제를 해결하기 위해서 프록시라는 기술을 사용함. 프록시를 사용하면 연관된 객체를 처음부터 데이터베이스에서 조회하는것이 아니라, 실제 사용하는 시점에 데이터베이스에서 조회하는 것임. 하지만 자주사용하는 것이면은 조인을 사용해서 함께 조회하는것이 좋음. JPA는 즉시로딩과 지연로딩이라는 방법으로 두가지를 모두 지원함
+    - 프록시
+        - Team team = em.getReference(Team.class, "team1"); team.getId(); // 초기화되지않음
+        - @Access(AccessType.PROPERTY) 설정인 경우에만 초기화하지않는다.
+        - @Access(AccessType.FIELD) 설정인 경우에는 프록시 객체를 초기화한다.
+        - 이 프록시를 사용하면 멤버를 생성하고 멤버에 연관관계를 주입할때 유용하게쓸수있다. 데이터베이스 접근 횟수를 줄일수있다.
+        - em.getEnmtityManagerFactory().getPersistenceUnitUtil().isLoaded(object) 로 프록시가 초기화 됬는지 확인 가능하다
+    - 즉시로딩
+        - 멤버조회할때 연관된 팀도 가져옴
+        - @ManyToOne(fetch = FetchType.EAGER)
+    - 지연로딩
+        - 연관된 엔티티를 실제로 사용할때 가져온다
+        - @ManyToOne(fetch = FetchType.LAZY)
+    - JPA의 기본전략
+        - ~ToMany 일때는 지연
+        - ~ToOne 일때는 즉시
+
 * 영속성 전이와 고아 객체
     - JPA는 연관된 객체를 함께 저장하거나 함께 삭제할 수 있는 '영속성 전이'와 '고아 객체 제거' 라는 편리한 기능을 제공함
+    - CascadeType 옵션
+        - ALL : 전부적용
+        - PERSIST : 영속 child에 부모넣고 부모 persist하면 자식도 자동으로 저장
+        - MERGE : 병합
+        - REMOVE : 삭제 부모만 없애도 자식도 다 없어짐
+        - REFRESH : refresh
+        - DETACH : detach
+    - CasCade 옵션은 @OneToMany 안에 설정한다 ex(cascade = CascadeType.PERSIST)
+    - 고아 객체 제거 orphanRemoval = true -> 부모엔티티의 자식s 엔티티에서 컬렉션에서 제거하면 삭제된다.
+
+## ch09
+* 값 타입
+
+## ch10 
+* 객체지향쿼리언어
+
+## ch11 
+* 웹 어플리케이션 제작
+
+## ch12
+* 스프링 데이터 JPA
+## ch13
+* 웹 어플리케이션과 영속성 관리
+## ch14
+* 컬렉션과 부가기능
+## ch15
+* 고급 주제와 성능 최적화
+
+## ch16
+* 트랜잭션과 락, 2차 캐시
