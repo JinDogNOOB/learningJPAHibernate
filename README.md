@@ -149,6 +149,18 @@
 
 ## ch09
 * 값 타입
+    - 기본값 타입
+    - 임베디드 타입(복합 값 타입)
+    - 값 타입과 불변 객체
+    - 값 타입의 비교
+    - 값 타입 컬렉션
+* 기본값 타입
+    - int, double, 래퍼클래스(Integer), String
+* 임베디드 타입(복합 값 타입)
+    - @Embeddable 어노테이션붙인 Period 클래스에 Date startDate, endDate; 선언해놓고 실제 Entity 클래스에서 Emgedded Period workPeriod; 식으로 쓰면 응집력있게 쓸수있다. 간단한 구조체 마냥 
+* 컬렉션 값 타입 > ./ch09_collectionvalue
+    - 값 타입을 하나 이상 저장하려면
+    - ex) 좋아하는 음식들, 주소들 을 하나의 멤버에 연관
 
 ## ch10 
 * 객체지향쿼리언어
