@@ -162,8 +162,27 @@
     - 값 타입을 하나 이상 저장하려면
     - ex) 좋아하는 음식들, 주소들 을 하나의 멤버에 연관
 
-## ch10 
-* 객체지향쿼리언어
+## ch10 > ./ch10_ooquery
+* 객체지향쿼리언어 > simple_jpql
+    - EntityManager.find(), a.getB().getC() 와 같은 단순한 검색만으로는 어플리케이션 개발 어려움
+    - ORM은 테이블이 아닌 객체를 대상으로 개발하는 방식
+    - 따라서 엔티티 객체를 대상으로 검색을 하는 방법이 필요 -> JPQL 등장
+* JPQL
+    - 테이블이 아닌 객체를 대상으로 검색하는 객체지향쿼리
+    - SQL을 추상화해서 특정 데이터베이스 SQL에 의존하지않는다.
+* JPA가 공식지원하는 다양한 검색지원방식
+    - JPQL(Java Persistence Query Language)
+    - Criteria 쿼리(Criteria Query) : JPQL을 편리하게 작성하도록 도와주는 api, 빌더 클래스 모음
+    - 네이티브 SQL : JPA에서 jpql대신 직접 SQL을 사용할 수 있다.
+    - QueryDSL : Criteria 쿼리처럼 JPQL을 편하게 작성하도록 도와주는 빌더 클래스 모음, 비표준 오픈소스 프레임워크
+    - JDBC 직접 사용 : MyBatis 같은 SQL 매퍼 프레임워크 사용 : 필요하면 JDBC를 직접 사용할 수 있다.
+* 명심
+    - QueryDSL, Criteria 도 JPQL을 편하게 사용하도록 도와주는 빌더클래스일뿐임
+    - 중요한거는 JPQL
+* 기본 사용
+    - JPQL > jpql
+        - jpql 키워드(select, 등)은 대소문자 구분 안하지만 엔티티 이름은 대소문자 구분함
+        - 별칭은 필수 select m.userName from Member m 처럼 별칭 m같이 꼭 별칭 줘야함  
 
 ## ch11 
 * 웹 어플리케이션 제작
