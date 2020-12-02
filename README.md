@@ -1,4 +1,5 @@
 # learn hibernate
+* n+1 문제 : 연관된 엔티티또 또 불러와서 일을 두번한다. fetch 를 사용하면 미리 가져오는 전략을 사용하기때문에 일을 한번만 한다
 ## ch01_testing > ./ch01_testing
 * 기본적인 hibernate 사용
     - 엔티티매니저팩토리 생성은 비용이 많이 드니 어플리케이션 당 하나
@@ -183,7 +184,13 @@
     - JPQL > jpql
         - jpql 키워드(select, 등)은 대소문자 구분 안하지만 엔티티 이름은 대소문자 구분함
         - 별칭은 필수 select m.userName from Member m 처럼 별칭 m같이 꼭 별칭 줘야함  
-
+    - Criteria
+        - Criteria 쿼리는 jpql을 자바코드로 작성하도록 도와주는 빌더 클래스api
+        - 문법 오류를 컴파일 단계에서 잡을 수 있고 문자 기반의 jpql보다 안전하게 동적쿼리를 짤 수 있다.
+        - 대신 코드가 복잡하고장황해서 직관적으로 이해가 힘들다 
+    - QueryDSL > querydsl
+        - Criteria보다 간결한 오픈소스 프로젝트
+        - 공식문서 www.querydsl.com/static/querydsl/x.x.x/reference/ko-KR/html_signle/
 ## ch11 
 * 웹 어플리케이션 제작
 

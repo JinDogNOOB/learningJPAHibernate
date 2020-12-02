@@ -186,3 +186,6 @@ public class Member{
 }
 사용할때는
 List<Member> resultList = em.creat3eNamedQuery("Member.findByUsername", Member.class).setParameter("username", "user1").getResultList();
+
+
+
