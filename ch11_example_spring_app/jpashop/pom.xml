@@ -2,11 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <!-- pom model 버전 -->
 
-    <groupId>jpabook</groupId>
+    <groupId>jpabook</groupId> <!-- 프로젝트 그룹명 ex) com.hohoho-->
     <artifactId>jpashop</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>war</packaging>
+    <!-- java library는 jar, web application 은 war -->
 
     <name>jpatestproject</name>
 
@@ -25,21 +27,24 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
         <lombok.version>1.18.16</lombok.version>
         <log4jdbc.log4j2.version>1.16</log4jdbc.log4j2.version>
         <rest.assured.version>2.3.3</rest.assured.version>
+        <spring-loaded.version>1.2.8.RELEASE</spring-loaded.version>
     </properties>
 
 
     <dependencies>
         <!-- 부트 스타터 웹 -->
+        <!-- spring-web, spring-webmvc, spring-boot-starter-json, tomcat-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <!-- 스타터 jdbc -->
+        <!-- 히카리 jdbc pool, spring-jdbc-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
-        <!-- starter test -->
+        <!-- starter test 아마 여기에 junit 포함 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -73,18 +78,62 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
             <version>${rest.assured.version}</version>
             <scope>test</scope>
         </dependency>
+
+
+        <!-- #### 여기부터 추가 의존성 ####  -->
+
+        <!-- spring Object/Relational Mapping -->
+        <!-- 스프링 프레임워크 JPA 연동 라이브러리-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-orm</artifactId>
+            <version>5.2.11.RELEASE</version>
+        </dependency>
+
+        <!-- JPA표준을 포함하는 Hibernate -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-entitymanager</artifactId>
+            <version>5.4.24.Final</version>
+        </dependency>
+
+        <!-- mysql connector -->
+        <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.22</version>
+        </dependency>
+
+        <!-- 로깅 SLF4J & LogBack-->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.30</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.2.3</version>
+            <scope>test</scope>
+        </dependency>
+
+
+
     </dependencies>
 
 
 
 
-
+<!-- 빌드 -->
     <build>
         <plugins>
+
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <dependencies>
+                <!-- 소스변경일어나면 자동 톰갯 재실행-->
                     <dependency>
                         <groupId>org.springframework</groupId>
                         <artifactId>springloaded</artifactId>
@@ -92,6 +141,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
                     </dependency>
                 </dependencies>
             </plugin>
+
         </plugins>
     </build>
 
