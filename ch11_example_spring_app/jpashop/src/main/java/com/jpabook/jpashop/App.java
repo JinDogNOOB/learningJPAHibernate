@@ -22,7 +22,8 @@ import org.springframework.web.filter.CharacterEncodingFilter;
 @SpringBootApplication(exclude = { 
     DataSourceAutoConfiguration.class,
     DataSourceTransactionManagerAutoConfiguration.class, 
-    HibernateJpaAutoConfiguration.class })
+    HibernateJpaAutoConfiguration.class 
+    })
 public class App extends SpringBootServletInitializer {
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 

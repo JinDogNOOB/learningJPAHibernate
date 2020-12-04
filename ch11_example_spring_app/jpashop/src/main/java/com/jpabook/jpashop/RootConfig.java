@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.orm.jpa.JpaTransactionManager;
 
 // root-context.xml 대체용 자바 config
 /**
@@ -43,16 +44,8 @@ public class RootConfig {
     @Value("${jdbc.password}")
     private String jdbcPassword;
  */
-    @Bean
-    @Primary
-    @ConfigurationProperties("spring.datasource.hikari")
-    public DataSource dataSource(){
-        logger.info("히카리 데이터소스 생성");
-        return DataSourceBuilder.create()
-                .type(HikariDataSource.class)
-                .build();
-    }
 
+    
 
 }
 
