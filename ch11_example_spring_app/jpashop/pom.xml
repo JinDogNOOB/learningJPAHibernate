@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <!-- pom model 버전 -->
 
-    <groupId>jpabook</groupId> <!-- 프로젝트 그룹명 ex) com.hohoho-->
+    <groupId>jpabook</groupId>    <!-- 프로젝트 그룹명 ex) com.hohoho-->
     <artifactId>jpashop</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>war</packaging>
@@ -31,12 +31,31 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
     </properties>
 
 
+    <!-- 의존성 scope
+각 의존성마다 <scope> ? </scope>
+compile(기본값)
+    - 테스트 및 런타임에도 classpath에 포함
+provided
+    - jdk 또는 컨테이너에 의해서 runtime에 제공되는 모듈
+    - 이미 컨테이너가 해당 라이브러리를 제공하고 있을때 유용 따라서 실제 배포시에는 제외대상
+runtime
+    - 컴파일시에는 필요하지않지만 실행시에 사용되는 경우 실행시 라이브러리 사용
+test
+    - 테스트 코드에만 사용, 배포시 제외
+-->
+
     <dependencies>
         <!-- 부트 스타터 웹 -->
         <!-- spring-web, spring-webmvc, spring-boot-starter-json, tomcat-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- 스타터 jdbc -->
         <!-- 히카리 jdbc pool, spring-jdbc-->
@@ -107,9 +126,8 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
 
         <!-- 로깅 SLF4J & LogBack-->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.30</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -125,7 +143,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
 
 
 
-<!-- 빌드 -->
+    <!-- 빌드 -->
     <build>
         <plugins>
 
@@ -133,7 +151,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <dependencies>
-                <!-- 소스변경일어나면 자동 톰갯 재실행-->
+                    <!-- 소스변경일어나면 자동 톰갯 재실행-->
                     <dependency>
                         <groupId>org.springframework</groupId>
                         <artifactId>springloaded</artifactId>
