@@ -191,6 +191,27 @@
     - QueryDSL > querydsl
         - Criteria보다 간결한 오픈소스 프로젝트
         - 공식문서 www.querydsl.com/static/querydsl/x.x.x/reference/ko-KR/html_signle/
+    - Native SQL 사용 > nativeSql
+        - JPA에서 지원하는 NativeSQL을 사용하면 DB고유의 기능도 사용가능하고 엔티티를 조회했을때 영속성 컨텍스트의 기능을 그대로 사용가능
+* 심화
+    - 벌크연산
+        - 엔티티 다수를 수정할때 하나하나 바꾸면 시간이 너무 오래걸림
+        - 여러 건을 한번에 삭제하거나 수정하는 벌크연산 필요 excuteUpdate()
+        - int reusltCount = em.createQuery("수정 or 삭제 jpql").setParameter("amount", 10).executeUpdate();
+        - db에 직접 요청하는 것이기 때문에 영속성 컨텍스트와 안맞을 수 있다. 
+        - em.refresh(Entity) 로 다시 원하는 엔티티를 재조회하거나
+        - 벌크연산을 가장먼저 실행하거나
+        - 벌크연산 수행후 영속성 컨텍스트를 초기화하는 것이다.
+    - 쿼리 후 영속상태
+        - Member같은 엔티티를 조회하면 영속컨텍스트에서 관리하지만 단순값이나 member.address 같은것만 조회해오면 관리안한다.
+    - em.find() vs JPQL
+        - find는 영속컨텍스트에 찾고자하는게 있으면 그것을 준다(1차캐시라고함) 없으면 db조회
+        - jpql은 무조건 db먼저 조회하고 조회한 값이 영속컨텍스트에 있는 값이면 버리고 영속컨텍스트에 있던 값 반환
+    - jpql과 flush모드
+        - em.setFlushMode(FlushModeType.AUTO); //커밋 또는 쿼리 실행시 플러시(기본값)
+        - em.setFlushMode(FlushModeType.COMMIT); //커밋시에만 플러시
+        - 만약 그 jpql 작업에만 플러쉬모드를 바꿔서쓰고싶다 하면 em.createQuery(~,~).setFlushMode(FlushModeType.?) 하면 된다
+        - 성능최적화를 위해서 적절히 사용하자 
 ## ch11 
 * 웹 어플리케이션 제작
 
