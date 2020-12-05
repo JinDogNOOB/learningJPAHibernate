@@ -16,6 +16,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,7 +24,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @Entity
+@Table(name = "ORDERS")
 public class Order {
+
     @Id @GeneratedValue
     @Column(name = "ORDER_ID")
     private Long id;
@@ -39,7 +42,7 @@ public class Order {
     @JoinColumn(name = "DELIVERY_ID")
     private Delivery delivery;
 
-    private Date orderDate; // 주문시간
+    // private Date orderDate; // 주문시간
 
     @Enumerated(EnumType.STRING)
     private OrderStatus status; // 주문상태

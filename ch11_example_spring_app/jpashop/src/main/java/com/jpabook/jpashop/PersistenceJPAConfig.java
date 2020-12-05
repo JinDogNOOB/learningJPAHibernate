@@ -32,7 +32,7 @@ public class PersistenceJPAConfig {
         //방언
         properties.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQL8Dialect");
         //스키마 자동생성
-        properties.setProperty("hibernate.hbm2ddl.auto", "false");
+        properties.setProperty("hibernate.hbm2ddl.auto", "update");
         properties.setProperty("hibernate.id.new_generator_mappings", "true");
         return properties;
     }
@@ -55,7 +55,7 @@ public class PersistenceJPAConfig {
         LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
         emf.setDataSource(dataSource()); // 데이터소스 설정
 
-        emf.setPackagesToScan(new String[] { "com.baeldung.persistence.model" }); //@Entity가 붙은 클래스를 자동검색하기위한 시작점 지정
+        emf.setPackagesToScan(new String[] { "com.jpabook.jpashop.domain" }); //@Entity가 붙은 클래스를 자동검색하기위한 시작점 지정
 
         JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter(); // JPA 벤더 어댑터 지정, 여기서는 hibernate를 사용하므로 하이버네이트 입력
         emf.setJpaVendorAdapter(vendorAdapter);
@@ -65,7 +65,7 @@ public class PersistenceJPAConfig {
 
     @Bean
     public PlatformTransactionManager transactionManager() {
-        logger.info("엔티티매니저 생성");
+        logger.info("트랜잭션 매니저 생성");
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
 

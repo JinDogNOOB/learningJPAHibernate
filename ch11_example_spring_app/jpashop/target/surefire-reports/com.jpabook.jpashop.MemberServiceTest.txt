@@ -1,0 +1,8 @@
+-------------------------------------------------------------------------------
+Test set: com.jpabook.jpashop.MemberServiceTest
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 3.336 s <<< FAILURE! - in com.jpabook.jpashop.MemberServiceTest
+회원가입  Time elapsed: 0.3 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <Member(id=1, name=kim, address=null, orders=[])> but was: <com.jpabook.jpashop.domain.Member@70c99e13>
+	at com.jpabook.jpashop.MemberServiceTest.회원가입(MemberServiceTest.java:46)
+

@@ -12,6 +12,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerA
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.filter.CharacterEncodingFilter;
 
 /**
@@ -24,6 +25,7 @@ import org.springframework.web.filter.CharacterEncodingFilter;
     DataSourceTransactionManagerAutoConfiguration.class, 
     HibernateJpaAutoConfiguration.class 
     })
+// @Import({MvcConfig.class, PersistenceJPAConfig.class, RootConfig.class})
 public class App extends SpringBootServletInitializer {
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
