@@ -1,6 +1,10 @@
 ## ch11 project
 ch11_example_spring_app/jpashop/.factorypath
+
 ch11_example_spring_app/jpashop/.classpath
+
 ch11_example_spring_app/jpashop/.project
-ch11_example_spring_app/jpashop/.settings
-ch11_example_spring_app/jpashop/target
+
+ch11_example_spring_app/jpashop/.settings/
+
+ch11_example_spring_app/jpashop/target/
