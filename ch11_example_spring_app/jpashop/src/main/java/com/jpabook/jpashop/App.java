@@ -16,8 +16,8 @@ import org.springframework.web.filter.CharacterEncodingFilter;
 
 /**
  * @Configuration @EnableAutoConfiguration @ComponentScan
- * 
- *                war로 배포하기위해서 springBootServletInitializer를 상속받는다
+ *                  
+ * war로 배포하기위해서 springBootServletInitializer를 상속받는다
  */
 @SpringBootApplication(exclude = { 
     DataSourceAutoConfiguration.class,

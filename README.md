@@ -220,6 +220,14 @@
     - 어플리케이션 기능 구현
 * 프로젝트 환경설정
     - Maven 설치 후 환경변수 path에 등록
+* 스프링 설정 
+    - web.xml, root-context, servlet-context => java config
+    - 의존성 추가
+    - datasource 설정
+* 요구사항분석
+* 테이블, 엔티티 설계 및 구축
+* 비즈니스로직(레포지토리, 서비스) 구축 및 테스트
+* 컨트롤러, 뷰 구축
 
 
 ## ch12
