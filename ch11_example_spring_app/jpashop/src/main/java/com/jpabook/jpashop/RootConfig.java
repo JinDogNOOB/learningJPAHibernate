@@ -32,7 +32,6 @@ import org.springframework.orm.jpa.JpaTransactionManager;
  */
 
 @Configuration
-@PropertySource("classpath:/application.properties")
 public class RootConfig {
     private static final Logger logger = LoggerFactory.getLogger(RootConfig.class);
 /*     @Value("${jdbc.driverClassName}")
