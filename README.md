@@ -493,3 +493,162 @@
 
 ## ch16
 * 트랜잭션과 락, 2차 캐시
+- 트랜잭션 기초와 JPA가 제공하는 낙관적 락과 비관적 락
+    - 트랜잭션은 ACID (원자성, 일관성, 격리성, 지속성)을 보장해야함
+        - 원자성 : 트랜잭션 내에서 실행한 작업들은 마치 하나의 작업인 것처럼 모드 성공하든가 모두 실패해야한다.
+        - 일관성 : 모든 트랜잭션은 일관성 있는 데이터 베이스 상태를 유지해야한다. 예를 들면 데이터베이스에서 정한 무결성 제약조건을 항상 만족해야한다.
+        - 격리성 : 동시에 실행되는 트랜잭션들이 서로에게 영향을 미치지 않도록 격리한다. 격리성은 동시성과 관련된 성능 이슈로 인해 격리 수준을 선택할 수 있다.
+        - 지속성 : 트랜잭션을 성공적으로 끝내면 그 결과가 항상 기록되어야한다. 중간에 시스템에 문제가 발생해도 데이터베이스 로그 등을 사용해서 성공한 트랜잭션 내용을 복구해야한다.
+    - 문제는 격리성이다. 격리성을 완전하게 보장하려면 완전 순서대로 실행해야하는데 그러면 동시성 처리 성능이 상당히 나빠진다. 
+    - 이런 문제로 인해 ANSI 표준은 트랜잭션의 격리 수준을 4단계로 나누어 정의했다.
+        - READ UNCOMMITED(커밋되지 않은 읽기)
+        - READ COMMITED(커밋된 읽기)
+        - REPEATABLE READ(반복 가능한 읽기)
+        - SERIALIZABLE(직렬화 가능)
+    - 밑으로 갈수록 격리수준이 높아진다.
+    - 격리수준이 낮으면 다음과 같은 문제가 있을 수 있다
+        - DIRTY READ : 트랜잭션1이 x를 수정하고있는데 트랜잭션2가 x를 조회함. 데이터 정합성에 큰 문제가 생김
+        - NON-REPEATABLE READ : 트랜잭션 1이 x를 조회했다. 이와중에 트랜잭션 2가 x 수정했다. 트랜잭션 1이 x를 또 조회했는데 처음이랑 값이 다르다 문제 
+        - PHANTOM READ : 트랜잭션 1이 10살 이하의 회원을 조회해서 2명이라고 나왔다. 또 조회했더니 한명 늘어서 3명이라고 나온다. 그와중에 누가 추가한것 문제
+    - READ UNCOMMITED 문제 = DIRTY READ + NON-REPEATABLE READ + PHANTOM READ
+    - READ COMMITED 문제 = NON-REPEATABLE READ + PHANTOM READ
+    - REPEATABLE READ 문제 = PHANTOM READ
+    - SERIALIZABLE 문제 = 가장 강력 하지만 동시성 처리 성능은...
+- 애플리케이션 대부분은 동시성 처리가 중요하므로 데이터베이스들은 보통 READ COMMITTED 격리 수준을 기본으로 사용한다.
+- 일부 중요한 비즈니스 로직에 더 높은 격리수준이 필요하면 데이터 베이스가 제공하는 잠금 기능을 사용하면 된다.(요즘 db들이 더 많은 동시성 처리를 위해 락보다는 MVCC를 사용함, 락 사용하는 디비와는 약간 다른 특성을 가짐)
+* 낙관적 락과 비관적 락
+    - JPA의 영속성컨텍스트(1차 캐시)를 적절히 활용하면 데이터베이스 트랜잭션이 READ COMMITTED 격리 수준이어도 애플리케이션 레벨에서 반복가능한 읽기가 가능하다
+    - JPA는 데이터베이스 트랜잭션 격리 수준을 READ COMMITTED정도로 가정한다. 만약 일부 로직에 더 높은 격리 수준이 필요하면 낙관적 락과 비관적 락 둘중에 하나를 사용하면 된다.
+    - 낙관적 락
+        - 트랜잭션 대부분은 충돌이 발생하지않는다고 낙관적으로 가정하는 방법, JPA가 제공하는 버전관리 기능을 사용한다. 애플리케이션이 제공하는 락, 대신 트랜잭션을 커밋하기 전까지는 트랜잭션의 충돌을 알 수 없다는 특징이 있음
+    - 비관적 락
+        - 트랜잭션의 충돌이 발생한다고 가정하고 우선 락을 걸고 보는 방법
+        - 데이터 베이스가 제공하는 락 기능을 사용한다.
+    - 추가적인 문제로 트랜잭션 범위를 넘어서는 문제가있다. 
+        - a랑 b가 똑같은 공지사항을 수정하고 a가 먼저 누르고 b가 나중에 눌렀을때 하나는 버려지거나 할텐데 이거는 어떻게 할것인가 세가지 방법이 있다.
+            - 마지막 커밋만 인정하기(기본)
+            - 최초 커밋만 인정하기
+            - 충돌하는 갱신 내용 병합하기 
+    - @Version
+        - 낙관적 락을 사용하려면 이 어노테이션을 알고있어야함
+        - 엔티티에 다음 추가 @Version private Integer version; 이 부분은 커밋할때마다 자동증가한다.
+        - a랑 b가 자료 하나를 가져가놓고 수정하고 a가 먼저놓으면 version 2다 이때 b도 다 해서 저장하려고 봤더니 이미 version이 2다. 이러면 수정불가다
+        - 최초 커밋만 인정하기 방법이다.
+        - @Version으로 추가한 버전관리 필드는 JPA가 직접 관리하므로 개발자가 임의로 수정하면 안된다.(벌크연산은 버전을 무시하므로 버전필드를 강제로 증가시켜줘야한다.)
+* JPA 락 사용
+    - 참고 : JPA를 사용할때 추천하는 전략은 READ COMMITTED + 낙관적 버전 관리이다.
+    - 다음 위치에 적용가능
+    - EntityManager.lock(), EntityManager.find(), EntityManager.refresh()
+    - Query.setLockMode() (TypedQuery 포함)
+    - @NamedQuery
+    - ex) em.find(Board.class, id, LockModeType.OPTIMISTIC); or em.lock(board, LockModeType.OPTIMISTIC);
+* LockModeType
+    - OPTIMISTIC : 낙관적 락
+    - OPTIMISTIC_FORCE_INCREMENT : 낙관적 락 + 버전정보를 강제로 증가
+    - PESSMISTIC_READ : 비관적 락, 읽기 락을 사용
+    - PESSMISTIC_WRITE : 비관적 락, 쓰기 락을 사용
+    - PESSMISTIC_FORCE_INCREMENT : 비관적락 + 버전정보를 강제로 증가
+    - NONE : 락을 걸지 않는다
+* JPA 낙관적 락
+    - JPA가 제공하는 낙관적 락은 버전(@Version)을 사용한다. 낙관적 락을 사용하려면 버전이 있어야한다. 트랜잭션을 커밋하는 시점에 충돌을 알 수 있다는 특징이 있다.
+    - 낙관적 락 예외
+        - javax.persistence.OptimisticLockException(JPA 예외)
+        - org.hibernate.StaleObjectStateException(하이버네이트 예외)
+        - org.springframework.orm.ObjectOptimisticLockingFailureException(스프링 예외 추상화)
+    - 락 옵션 없이 @Version만 설정되있어도 낙관적 락이 적용된다. 락 옵션을 사용하면 세밀하게 제어가능하다.
+    - none일때
+        - 용도 : 조회한 엔티티를 수정할 때 다른 트랜잭션에 의해 변경되지 않아야한다. 조회 시점부터 수정 시점까지를 보장한다.
+        - 동작 : 엔티티를 수정할 때 버전을 체크하면서 버전을 증가한다. 이때 데이터베이스의 버전값이 현재 버전이 아니면 예외 발생
+        - 이점 : 두 번의 갱실 분실 문제를 예방한다.
+    - optimistic일때
+        - 용도 : 조회한 엔티티는 트랜잭션이 끝날 때까지 다른 트랜잭션에 의해 변경되지않아야한다. 조회시점부터 트랜잭션 끝날때까지 변경되지않음을 보장한다.
+        - 동작 : 트랜잭션을 커밋할 때 버전정보를 조회해서 현재 엔티티의 버전과 같은지 검증한다. 만약 같지않으면 예외가 발생한다.
+        - 이점 : dirty read와 non-repeatable read를 방지한다.
+    - optimistic_force_increment
+        - 게시글 하위 첨부파일 바꿨을때도 게시글 버전이 올라가야함
+        - 동작 : 엔티티를 수정하지않아도 트랜잭션을 커밋할때 버전정보를 강제로 올린다. (조회만 해도)
+        - 이점 : 강제로 버전을 증가해서 논리적인 단위의 엔티티 묶음을 버전 관리할 수 있다.
+* JPA 비관적 락
+    - JPA가 제공하는 비관적 락은 데이터베이스 트랜잭션 락 메커니즘에 의존하는 방법임.
+    - 주로 SQL 쿼리에 select for update 구문을 사용하면서 시작하고 버전정보는 사용하지 않는다.
+    - 비관적 락은 주로 PESSIMISTIC_WRITE 모드를 사용한다.
+    - 엔티티가 아닌 스칼라 타입을 조회할 때도 사용할 수 있다.
+    - 데이터를 수정하는 즉시 트랜잭션 충돌을 감지할 수 있다.
+    - 비관적 락에서 발생하는 예외
+        - javax.persistence.PessimisticLockException(JPA 예외)
+        - org.springframework.dao.PessimisticLockingFailureException(스프링 예외 추상화)
+    - pessimistic_write
+        - 비관적 락이라고 하면 보통 이 락이다
+        - 용도 : 데이터베이스에 쓰기 락을 건다.
+        - 동작 : 데이터베이스 select for update 를 사용해서 락을 건다
+        - 이점 : non-repeatable read를 방지한다. 락이 걸린 로우는 다른 트랜잭션이 수정할 수 없다.
+    - pessimistic_read
+        - 데이터를 반복 읽기만 하고 수정하지 않는 용도로 락을 걸때 사용, 일반적으로는 잘 사용하지 않음
+        - mysql : lock in share mode
+        - postgreSQL : for share
+    - pessimistic_force_increment
+        - 비관적락중 유일하게 버전정보를 사용함
+        - 비관적 락이지만 버전 정보를 강제로 증가시킨다
+        - 하이버네이트는 nowait을 지원하는 데이터베이스에 대해서 for update nowait 옵션을 적용한다.
+    - 비관적 락과 타임아웃
+        - 비관적 락을 사용하면 락을 획들할때까지 트랜잭션이 대기한다. 무한정 기다릴수는 없으므로 타임아웃을 줄수있다.
+        - 일정 시간 대기해서 응답이 없으면 javax.persistence.LockTimeoutExcpeiton이 발생한다.
+        - javax.persistence.lock.timeout 설정에 ms 단위의 초를 설정하면된다.
+* 2차 캐시
+    - 네트워크를 통해 데이터베이스에 접근하는 시간 비용은 애플리케이션 서버에서 내부 메모리에 접근하는 시간 비용보다 수만에서 수십만 배 이상 비싸다
+    - 따라서 조회한 데이터를 메모리에 캐시해서 데이터베이스 접근 횟수를 줄이면 애플리케이션 성능을 획기적으로 개선할 수 있다.
+    - 영속성 컨텍스트는 1차 캐시
+    - 하이버네이트를 포함한 JPA 구현체들은 애플리케이션 범위의 캐시를 지원하는데 이것을 공유캐시 또는 2차 캐시라고함
+    - 2차 캐시를 사용하면 데이터베이스 조회 횟수를 획기적으로 줄일 수 있음
+    - 2차 캐시는 캐시한 객체를 직접 반환하지 않고 복제해서 반환해줌 -> 만약에 그대로 줬으면은 락을 걸었어야했고 락을 걸으면은 동시성이 떨어질수있음
+    - 사용법
+        - 엔티티 위에 @Cacheable 어노테이션을 넣으면 된다. @Cacheable(True or false)로 설정할수 있는데 기본값은 true이다.
+        - shared-cache-mode 설정을 해서 애플리케이션 전체에 캐시를 어떻게 적용할 지 설정해야한다
+            - all : 모든 엔티티를 캐시
+            - none : 캐시 사용안함
+            - enable-selective : cacheable(true) 로 설정한 엔티티만 캐시를 적용
+            - disable-selective : cacheable(false) 로 명시된 엔티티는 캐시하지 않는다.
+            - upspecified : JPA구현체가 저의한 설정을 따른다.
+    - 캐시 조회, 저장 방식 설정
+        - 캐시를 무시하고 테이터베이스를 직접 조회하거나 캐시를 갱신하려면 캐시조회 모드와 캐시 보관모드를 사용하면 된다.
+        - ex) em.setProperty("javax.persistence.cache.retrieveMode", CacheRetrieveMode.BYPASS);
+        - 프로퍼티 이름
+            - retrieveMode : 캐시 조회 모드 프로퍼티 이름
+            - storeMode : 캐시 보관 모드 프로퍼티 이름
+        - 옵션
+            - CacheRetrieveMode
+                - USE : 캐시에서 조회한다. (기본값)
+                - BYPASS : 캐시를 무시하고 데이터베이스에 직접 접근
+            - CacheStoreMode
+                - USE : 캐시에 저장, 트랜잭션을 커밋하면 등록 수정한 엔티티도 캐시에 저장(기본값)
+                - BYPASS : 캐시에 저장하지 않는다
+                - REFRESH : USE 전략에 추가로 데이터베이스에서 조회한 엔티티를 최신 상태로 다시 캐시한다.
+    - JPA 캐시 관리 API
+    - 여기까지가 JPA가 표준화한 캐시기능
+- 하이버네이트와 EHCACHE
+    - 하이버네이트가 지원하는 캐시는 크게 3가지
+        - 엔티티 캐시 : 엔티티 단위로 캐시,  식별자로 엔티티를 조회하거나 컬렉션이 아닌 연관된 엔티티를 로딩할 때 사용
+        - 컬렉션 캐시 : 엔티티와 연관된 컬렉션 캐시, 컬렉션이 엔티티를 담고있으면 식별자 값만 캐시
+        - 쿼리 캐시 : 쿼리와 파라미터 정보를 키로 사용해서 캐시. 결과가 엔티티면 식별자 값만 캐시한다. 
+    - 의존성 추가
+        - org.hibernate / hibernate-ehcache 
+        - 자세한 설정 내용은 ehcache 공식문서 참고
+    - 엔티티 캐시와 컬렉션 캐시
+        - @Cacheable @Cache(usage = CacheConcurrencyStrategy.READ_WRITE) @Entity ..... 안에 컬렉션에 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+        - @Cache가 하이버네이트 전용(컬렉션 캐시 적용할때나 세밀한 설정을 할때 사용)
+        - @Cache 옵션
+            - usage : 캐시 동시성 전략 설정
+            - region : 캐시 지역 설정( 기본값 패키지명+클래스명 다른걸로 하고싶을시에 설정)
+            - include : 연관 객체를 캐시에 포함시킬지 선택. all, non-lazy 선택 가능 기본값은 all
+    - 쿼리 캐시
+        - 쿼리와 파라미터 정보를 키로 사용해서 쿼리 결과를 캐시하는 방법
+        - 적용하려면 영속성 유닛 설정에 hibernate.cache.use_query_cache 를 true로 설정해야함
+        - 그리고 캐시를 적용하려는 쿼리마다 org.hibernate.cacheable, true 의 힌트를 주면된다.
+- 쿼리 캐시를 잘 사용하면 극적은 성능향상이 있지만 빈번하게 변경이 일어나는 테이블에 사용하면 오히려 성능이 더 저하된다.
+- 따라서 수정이 거의 일어나지 않는 테이블에 사용해야 효과를 볼 수 있다.
+* 주의 
+    - 쿼리 캐시가 적용되어 있는 쿼리를 실행해서 100건의 Member를 얻었음
+    - 컬렉션캐시나 쿼리캐시는 식별자만 저장하므로 한건씩 엔티티 캐시 영역에서 조회
+    - 만약 Member는 캐시적용안했을때는 한건씩 데이터베이스에서 조회
+    - 100건의 SQL 실행
+    - 따라서 쿼리캐시, 컬렉션 캐시를 사용하려면 결과 대상 엔티티에 꼭 엔티티 캐시를 걸어줘야한다.
