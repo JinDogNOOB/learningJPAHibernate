@@ -1,0 +1,73 @@
+// db 상황은 ch11과 같음
+
+// 1. ########################## Named 엔티티 그래프 ################################
+/*
+name은 엔티티 그래프의 이름을 정의
+attributeNodes 안에 조회할 속성을 넣으면 된다
+엔티티 그래프 여러개 넣고싶으면 @NamedEntityGraphs 으로 또 감싸면 된다.
+*/
+@NamedEntityGraph(name = "Order.withMember", attributeNodes = {
+    @NamedAttributeNode("member")
+})
+@Entity
+@Table(name = "ORDERS")
+public class Order{
+    @Id @GeneratedValue
+    @Column(name = "ORDER_ID")
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false) // lazy이지만 withMember엔티티그래프와 함께라면 Order조회할때 member도 같이 조회한다.
+    @JoinColumn(name = "MEMBER_ID")
+    private Member member;
+}
+
+// em.find에서 사용
+EntityGraph graph = em.getEntityGraph("Order.withMember");
+
+Map hints = new HashMap();
+hints.put("javax.persistence.fetchgraph", graph);
+
+Order order = em.find(Order.class, orderId, hints);
+
+
+// Order -> OrderItem -> Item 까지 함께 조회해야할때는
+@NamedEntityGraph(
+    name = "Order.withAll", 
+    attributeNodes = {
+        @NamedAttributeNode("member"),
+        @NamedAttributeNode(value = "orderItems", subgraph = "orderItems")
+    },
+    subgraphs = @NamedSubGraph(name = "orderItems", attributeNodes = {
+        @NamedAttributeNode("item")
+    })
+)
+
+// jpql에서 사용 em.find와 동일하게 힌트만 추가
+List<Order> resultList = em.createQuery("select o from Order o where o.id = :orderId", Order.class)
+    .setParameter("orderId", orderId)
+    .setHint("javax.persistence.fetchgraph", em.getEntityGraph("Order.withAll"))
+    .getResultList();
+
+
+
+
+
+// ################## 동적 엔티티 그래프 ########################
+EntityGraph<Order> graph = em.createEntityGraph(Order.class);
+graph.addAttributeNodes("member");
+
+Map hints = new HashMap();
+hint.put("javax.persistence.fetchgraph", graph);
+Order order = em.find(Order.class, orderId, hints);
+
+
+// 서브 그래프 추가
+EntityGraph<Order> graph = em.createEntityGraph(Order.class);
+graph.addAttributeNodes("member");
+Subgraph<OrderItem> orderItems = graph.addSubgraph("orderItems");
+orderItems.addAttributeNdoes("item");
+
+Map hints = new HashMap();
+hints.put("javax.persistence.fetchgraph", graph);
+
+Order order = em.find(Order.class, orderId, hints);

@@ -337,6 +337,53 @@
 
 ## ch14
 * 컬렉션과 부가기능
+    - 컬렉션 : 다양한 컬렉션 특징 설명
+    - 컨버터 : 엔티티의 데이터를 변환해서 데이터 베이스에 저장
+    - 리스너 : 엔티티에서 발생한 이벤트 처리
+    - 엔티티 그래프 : 엔티티 조회할때 연관된 엔티티들을 선택해서 함께 조회
+* 컬렉션
+    - JPA는 자바에서 기본으로 제공하는 Collection, List, Set, Map 컬렉션을 지원함
+    - @OneToMany, @ManyToMany 혹은 @ElementCollection을 사용해서 값 타입을 하나 이상 보관할 때 사용
+    - 종류
+        - Collection : 자바가 제공하는 최상위 컬렉션, hibernate에서는 중복허용하고 순서보장안한다고 가정한다. ArrayLIst로 초기화
+        - Set : 중복을 허용하지 않는 컬렉션, 순서를 보장하지는 않음. HashSet초기화
+        - List : 순서가 있는 컬렉션, 순서를 보장하고 중복을 허용한다. ArrayList 초기화 
+            - + @OrderColumn(name = "someThing") 하면 순서값을 저장해 조회할 때 사용((목표어레이엔티티)테이블에 position 컬럼 생성), 다음 단점때문에 실무에서 잘 사용하지않음
+                - board, comment가 있다고 할때 commnet를 insert할때는 board entity에 있는 @OrderColumn 포지션값을 알수가없다. 그래서 나중에 update문이 하나 더생긴다.
+                - List를 변경하면 연관된 많은 위치값을 변경해야한다.
+                - 중간에 position값이 없으면 null pointer exception 발생
+            - @OrderBy @OrderColumn대신 쓰는것
+                - @OrderBy("username desc, id asc") private set<Member> members.... 식으로 사용
+                - 실제로 조회할때 sql 문에 orderby 가 추가되서 간다 
+        - Map : Key, Value 구조로 되어있는 특수한 컬렉션 
+    - 하이버네이트에서 엔티티를 영속상태로 만들때 내부 원본컬렉션을 래핑하는 하이버네이트내장 컬렉션으로 바꾼다. 
+* 컨버터 
+    - 엔티티안에 vip 여부를 가리키는 boolean 타입이 있다고했을때 이게 실제 db에 저장될때는 db방언에 따라 1, 0 저장될텐데
+    - 컨버터를 쓰면 Y, N 등으로 저장할 수 있다. ex) @Convert(converter=BooleanToYNConverter.class) => BooleanToYNConverter 클래스를 생성해야한다. AttributeConverter를 상속받는다
+* 리스너 
+    - 모든 엔티티를 대상으로 언제 어떤 사용자가 삭제를 요청했는지 모두 로그를 남겨야 하는 요구사항이 있다고 가정할때, 이 때 삭제로직마다 다 찾아서 로그를 남기는 것은 너무 비효율적임
+    - JPA 리스너 기능을 사용하면 엔티티의 생명주기에 따른 이벤트를 처리할 수 있음
+    - 이벤트 종류
+        - PostLoad : 엔티티가 영속성 컨텍스트에 조회된 직후 또는 refresh를 호출한 후
+        - PrePersist : persist() 메소드를 호출해서 영속성 컨텍스트에 관리하기 직전에 호출된다, 식별자 생성 전략을 사용할 경우 id는 없다
+        - PreUpdate : flush()나 commit()을 호출해서 엔티티를 데이터베이스에 수정하기 직전에 호출된다
+        - PreRemove: remove() 메소드를 호출해서 엔티티를 영속성 컨텍스트에서 삭제하기 직전에 호출된다. 삭제로 인한 영속성 전이가 일어날 때도 호출된다
+        - PostPersist : flush나 commit을 호출해서 엔티티를 데이터베이스에 저장한 직후에 호출된다. 식별자 생성전략에따라(IDENTITY이면) persist()후에 바로 나타난다
+        - PostUpdate : flush(), commit()을 호출해서 엔티티를 데이터베이스에 수정한 직후 호출
+        - PostRemove : flush(), commit()을 호출해서 엔티티를 데이터베이스에 삭제한 직후에 호출
+    - 이벤트 적용 위치
+        - 엔티티에 직접 적용 : 엔티티안에 @PrePersist 등의 어노테이션 넣은후에 메소드에 로그저장로직을 넣는다
+        - 별도의 리스너 등록 : 엔티티 @Entity @EntityListeners(DuckListener.class) 처럼 클래스로 따로 빼서 넣고 메소드에는 Obj또는 특정 타입의 매개변수를 받도록한다.
+        - 기본 리스너 사용 : 또는 기본리스너를 설정에 적용하는 방법이 있다. xml or java config
+* 엔티티 그래프 > ./ch12
+    - 엔티티를 조회할때 연관된 엔티티들을 함께 조회하려면 글로벌 fetch 옵션을 EAGER로 설정하거나 JPQL 에서 패치조인을 사용하면 된다
+    - 패치조인의 경우에는 주문상태를 검색, 주문과 회원(fetch join)을 모두 검색 등등 상황에따라 여러 JPQL쿼리를 작성해야한다. 
+    - 이는 JPQL에 데이터 조회와 연관데이터조회기능을 한꺼번에 전가했기때문 
+    - 엔티티 그래프를 사용하면 기본 쿼리 구문에서 fetch join을 우리가 쓸 필요없이 연관데이터를 편리하게 가져올 수 있다.
+    - 방법에는 정적정의 Named엔티티 그래프, 동적정의 엔티티그래프가 있다.
+    - 명심
+        - root에서 시작 항상 조회하는 엔티티의 루트부터 시작
+        - 이미 로딩된거는 어떻게 할수없음, 조회한 엔티티를 힌트 추가해서 또 조회하면 적용되지않음     
 ## ch15
 * 고급 주제와 성능 최적화
 
