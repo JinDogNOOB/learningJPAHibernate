@@ -386,6 +386,110 @@
         - 이미 로딩된거는 어떻게 할수없음, 조회한 엔티티를 힌트 추가해서 또 조회하면 적용되지않음     
 ## ch15
 * 고급 주제와 성능 최적화
+    - 예외처리
+    - 엔티티 비교 (위에서 한번 설명했던것임 , 만약 영속컨텍스트 다르면 euqals 비즈니스키 비교, 또는 데이터베이스 동등성(@id) 비교한다)
+    - 프록시 심화 주제
+    - 성능 최적화
+* 예외 처리
+    - JPA 표준 예외들은 javax.persistence.PersistenceException의 자식 클래스들임 이 부모클래스는 RuntimeException의 자식클래스임
+    - JPA 표준 예외는 크게 두가지이다
+        - 트랜잭션 롤백을 표시하는 예외 : 심각한 예외
+        - 트랜잭션 롤백을 표시하지 않는 예외 : 개발자가 커밋할지 롤백할지 선택
+    - 롤백을 표시하는 예외
+        - EntityExistsException : persist() 호출시 이미 같은 엔티티가 있으면 발생
+        - EntityNotFoundException : EntityManager.getReference() 를 호출했는데 실제 사용시 엔티티가 존재하지 않으면 발생
+        - OptimisticLockException : 낙관적 락 충돌시 발생
+        - PessimisticLockException : 비관적 락 충돌시 발생
+        - RollbackException : EntityTransaction.commit() 실패시 발생, 롤백이 표시되어 있는 트랜잭션 커밋시에도 발생
+        - TransactionRequiredException : 트랜잭션이 필요할때 트랜잭션이 없으면 발생, 트랜잭션 없이 엔티티를 변경할때 주로 발생 
+    - 롤백을 표시하지않는 예외
+        - NoResultException : Query.getSignleResult() 호출시 결과가 하나도 없을때 발생
+        - NonUniqueResultException : Query.getSignleResult() 호출시 결과가 둘 이상일때 발생
+        - LockTimeoutException : 비관적 락에서 시간 초과시 발생
+        - QueryTimeoutException : 쿼리 실행 시간 초과 시 발생
+    - 서비스 계층에서 데이터 접근계층의 구현 기술에 직접 의존하는 것은 좋은 설계라 할 수 없다. 예외도 마찬가지다. 그래서 스프링프레임워크는 데이터 접근계층에서 생긴 예외를 추상화해서 개발자에게 제공함
+        - javax.persistence. -> org.springframework....
+        - PersistenceException -> JpaSystemException
+        - NoResultException -> EmptyResultDataAccessException
+        - NonUniuqeResultExcepotion -> IncorrectResultSizeDataAccessException
+        - LockTimeoutException -> CannotAcquireLockException
+        - QueryTimeoutException -> QueryTimeoutExcpeiton
+        - EntityExistsException -> DataIntegrityViolationExcpetion
+        - EntityNotFoundException -> JpaObjectRetievalFailureException
+        - OptimisticLockException -> JpaOptimisticLockingFailureException
+        - PessimisticLockException -> PessimisticLockingFailureException
+        - TransactionRequiredException -> InvalidDataAccessApiUsageException
+        - RollbackException -> TransactionSystemException
+    - JPA표준명세상 발생할수있는 다음 두 예외도 추상화해서제공함
+        - java.lang.IllegalStateException -> InvalidDataAccessApiUsageException
+        - java.lang.IllegalArgumentException -> InvalidDataAccessApiUsageException
+    - 이처럼 추상화된 예외 사용하려면 PersistenceExceptionTranslationPostProcessor를 스프링빈으로 등록하면 된다.
+    - java config 에서는 @Bean public PersistenceExceptionTranslationPostPorsessor tran() return new PersistenceExceptionTranslationPostProcessor();
+    - rollback할때 db는 롤백되지만 영속성컨텍스트는 그대로다. 잘 닫아주거나, em.clear(), osiv 사용중이면은 문서참고하자
+* 프록시 심화
+    - 프록시객체와 실제 엔티티 객체의 비교
+        - 동등성 비교할때는 == 비교 대신 instanceof사용(프록시는 원본을 상속받은 자식타입이므로)
+        - 프록시의 멤버변수에 직접접근말고 대신에 접근자 메소드 사용
+    - 상속관계와 프록시
+        - Item을 상속받는 프록시객체를 Book용으로 사용한다거나 다운캐스팅하면 예외발생하거나 작동이 원하는대로안된다.
+        - 해결법
+            - 다형성을 포기하고 자식타입 직접 조회
+            - 프록시 벗기기 unProxy() 함수로 원본엔티티 반환해서 사용
+            - 또는 Item추상클래스 implemnts getTitle { } 식으로 공통된 기능을 제공하는 메소드 구현을 강제하는 방법도 있다.
+            - 비지터 패턴 메소드 오버로딩을 사용해서 Book받으면 book일하고 Album 받으면 Album일하고 하는식으로 
+* 성능 최적화 
+    - 즉시로딩 n+1
+        - 가장 주의해야할 문제
+        - ex) @OneToMany(mappedBy= "member", fetch = FetchType.EAGER) private List<Order> orders  //class Member안임
+        - em.find(Member.class, id)로 조회하면 정말 잘 작동한다 조인이용해서
+        - 문제는 JPQL사용할때다
+        - 조회할때 지연로딩, 즉시로딩 신경쓰지않고 일단 Member리스트 조회한다음에 ! 아 EAGER네? 하면서 조회해서나온결과물의갯수만큼또 sql을 보낸다. 
+    - 지연로딩 n+1
+        - 위 시나리오를 지연로딩으로 설정해도 자유롭지 않다
+        - ex) @OneToMany(mappedBy= "member", fetch = FetchType.LAZY) private List<Order> orders    //class Member안임
+        - 지연로딩으로 설정하면 일단 jpql로 리스트 조회했을때 n+1은 발생하지않는다
+        - 이후 members.get(0).getOrders().size()는 괜찮은데
+        - for(Member member : memberes) member.getOrders().size(); 하면 n+1문제 발생이다.
+    - n+1문제 파훼법
+        - 패치 조인 사용
+            - select m from Member m join fetch m.orders > inner join기본사용 해서 한번에 잘 가져온다
+            - 다만 일대다 조인을 했으므로 겨로가가 늘어나서 중복된 결과가 나타날수있는데 이때 JPQL의 DISTINCT를 사용해서 중복을 제거하는것이 좋다
+        - 하이버네이트 @BatchSize
+            - 이 어노테이션을 사용하면 지정한 size만큼 sql의 in절을 사용해서 조회한다. 만약 회원이 10명인데 size=5로 했으면 5명씩해서 2번의 sql만 추가로 실행한다.
+            - 설정상으로 애플리케이션 전체이 기본 배치사이즈를 설정할 수도 있다. hibernate.default_batch_fetch_size
+        - 하이버네이트 @Fetch(FetchMode.SUBSELECT)
+            - 조회할때 서브쿼리를 사용해서 n+1문제를 해결한다.
+        - n+1 정리
+            - 지연로딩만을 사용하는것을 추천하고 성능 최적화가 꼭 필요한 곳에서는 JPQL 패치 조인을 사용하는 것이 좋다.
+            - 글로벌 패치전략 기본값
+                - one2one many2one 즉시로딩 > fetch=FetchType.LAZY 로 설정해서 지연로딩 전략으로 바꿔서 사용하자
+                - one2many many2many 지연로딩
+    
+    - 읽기 전용 쿼리의 성능 최적화
+        - 설명
+            - 영속성 컨텍스트에 굳이 넣을 필요없는 단순 조회에서는 굳이 변경감지를 위한 스냅샷 인스턴스를 영속성 컨텍스트에 보관하고있을필요가없다
+            - 읽기전용으로 엔티티를 조회하면 메모리 사용량을 최적화할수 있다.
+        - 방법
+            - 1. 스칼라 타입으로 조회
+            - 2. 읽기 전용 쿼리 힌트 사용(하이버네이트 전용) jpql사용할때 query.setHint("org.hibernate.readOnly", true);
+            - 3. 읽기 전용 트랜잭션 사용 @Transactional(readOnly = true) 자동 플러시를 끈다. 따라서 스냅샷비교와같은 동작을 하지않기때문에 성능향상이 있다.
+            - 읽기만 하는 로직에서 엔티티 조회 최적화는 1번 또는 2번을 선택해서 적용하고 3번을 통해서 읽기전용 트랜잭션으로 설정해서 플러시같은거 끄면 성능향상에 좋다.
+    - 배치 처리
+        - 수백만 건의 데이터를 배치 처리해야 하는 상황이면은 영속성 컨텍스트에 엔티티가 쌓이면서 메모리 부족 오류가 발생한다. 이러한 배치처리는 적절한 단위로 영속성 컨텍스트를 초기화해야한다. 2차 캐시를 사용하고 있다면 2차 캐시에 엔티티를 보관하지 않도록 주의해야한다.
+        - JPA 등록 배치
+            - if(i % 100 == 0){em.flush(); em.clear();} 100건마다 플러시 및 영속성 컨텍스트 초기화
+        - JPA 수정 배치
+            - 100건씩 페이징 조회해서 가져오고, 가져온 데이터 처리하고 em.flush(), em.clear();
+            - 하이버네이트 scroll 사용해서 한건한건 next() 로 가져올 수 있다.
+            - 무상태 세션 ( 영속성 컨텍스트 없이) 수정할때 직접 update() 해줘야한다.
+    - SQL 쿼리 힌트 사용
+        - JPA는 데이터베이스 SQL힌트 기능을 제공하지 않는다. SQL힌트 기능을 사용하려면 하이버네이트를 직접 사용해야한다.
+        - Session session = em.unwrap(Session.class); // 하이버 네이트 직접사용
+        - List<Member> list = session .createQuery("sql").addQueryHint("FULL (MEMBER)").list(); // sql 힌트 추가 하이버네이트 4.3.10기준으로 오라클 방언만 등록되어있다. 다른거 쓰고싶으면 직접 getQueryHintString을 오버라이딩해서 기능 구현해야한다
+    - 트랜잭션을 지원하는 쓰기 지연과 성능 최적화
+        - hibernate.jdbc.batch_size 설정으로 em.persist() 가 뭐 x번째됬을때 한번 통신보내고 하는식으로 동작하게할수있다.
+        - 다만 키 생성전략이 identity이면은 그전에 영속상태가 되려면 식별자가 필요한데 식별자를 얻기위해서 바로 sql이 db로 가기때문에 쓰기지연을 통한 성능최적화는 할 수 없다.
+    
 
 ## ch16
 * 트랜잭션과 락, 2차 캐시
