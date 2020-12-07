@@ -1,5 +1,15 @@
 # learn hibernate
-* n+1 문제 : 연관된 엔티티또 또 불러와서 일을 두번한다. fetch 를 사용하면 미리 가져오는 전략을 사용하기때문에 일을 한번만 한다
+* 교재 : 자바 ORM 표준 JPA 프로그래밍 - 김영한
+* n+1 문제 : 연관된 엔티티또 또 불러와서 일을 두번한다. 
+    - (A)OneToMany(B) 를 필드로 가지고 있는 엔티티A를 조회했을때 
+        - for(a : A) a.getB() 사용했을때
+        - 그때그때 또 B를 가져온다(글로벌 패치 전략이 LAZY 라서?)
+        - A조회된 갯수만큼 B를조회하는 쿼리를 날림
+    - 해결법
+        - join fetch -> 조인해서 A, B한번에 가져온다 #inner join 사용한다
+        - @EntityGraph -> 해당 쿼리만 패치전략 Eager # left outer join 사용
+        - 공통적으로 카티션 곱이 생기므로 해결해야함 -> 일대다 필드를 set으로 하거나 select 문에 distinct 추가
+        - 부가적인건 jpa n+1 cartesian 검색 
 ## ch01_testing > ./ch01_testing
 * 기본적인 hibernate 사용
     - 엔티티매니저팩토리 생성은 비용이 많이 드니 어플리케이션 당 하나
@@ -236,8 +246,95 @@
 
 ## ch12
 * 스프링 데이터 JPA
+    - 대부분의 데이터 접근 계층(Data Access Layer)은 CRUD로 부르는 유사한 등록, 수정, 삭제, 조회 등을 반복해서 개발해야함
+    - jpa를 활용해도 똑같은 일이 발생 ex) save, findOne, findAll...
+    - 제네릭과 상속을 적절히 구현하면 해결할 수 있으나 부모클래스에 너무 종속되게됨
+    - Spring Data JPA는 스프링 프레임워크에서 jpa 를 편리하게 사용할 수 있도록 지원하는 프로젝트 위에 crud문제를 세련된 방법으로 해결
+        - crud를 처리하기위한 공통 인터페이스 작성
+        - 실행시점에 스프링 데이터 jpa 가 구현객체를 동적으로 생성해서 주입
+        - public interface MemberRepository extends JpaRepository<Member, Long>{
+        - Member findByUsername(String username) ... 등등}
+        - 스프링 데이터 jpa 가 메소드 이름을 분석해서 적절하게 만들어줌;;
+        - 스프링 데이터 jpa는 스프링데이터프로젝트(몽고, 레디스, 하둡 등도 다룸)의 하부 프로젝트중 하나
+    - 도메인 클래스 바인딩 -> Controller파라미터에 Member, Order 로 받을수있게 -> 간편하게 제공해줌
+    - 그외 검색조건등을 넘기는 명세전달 등등 편리한 방법 제공 
+* 스프링 데이터 JPA와 QueryDSL 통합
+    - 두가지 방법으로 QueryDSL 지원
+        - org.springframework.data.querydsl.QueryDslPredicateExecutor
+        - org.springframework.data.querydsl.QueryDslRepositorySupport
+    - QueryDslPredicateExecutor
+        - 첫번째 방법은 레포지토리에서 QueryDslPredicateExecutor를 상속받으면 된다.
+        - ex) public interface ItemRepository extends JpaRepository<Item, Long>, QueryDslPredicateExecutor<Item>{}
+        - 다만 join, fetch 를 사용할 수 없다. 사용하려면 JPAQuery를 직접 사용하거나 두번째방법 Support를 사용해야한다
+    - QueryDslPredicateSupport
+        - QueryDSL의 모든 기능을 사용하려면 JPAQuery 객체를 직접생성해서 사용하면된다
+        - 이때 스프링 데이터 JPA가 제공하는 Support 를 상속 받아 사용하면 더 편리하게 사용 가능하다
+        - 스프링 데이터 JPA가 제공하는 공통 인터페이스는 직접 구현할 수 없기 때문에 따로 클래스를 만들어서 Support를 상속받고 사용해야한다.\
+        - ex) public class OrderRepositoryImpl extends QueryDslRepositorySupport implements CustomOrderRepository{...}
+        - -> 생성자에서 super(Order.class); 로 엔티티클래스 정보를 넘겨줘야한다.
+    - 이 책을 쓰신분의 생각으로는 spring + jpa 시 spring data jpa는 필수라고 생각하신다고함
+
+        
 ## ch13
 * 웹 어플리케이션과 영속성 관리
+    - 12장 이전에 했던 j2se환경에서의 jpa 환경은 우리가 엔티티매니저생성하고 트랜잭션도 관리했어야했는데 
+    - 스프링이나 j2ee 컨테이너 환경에서 jpa를 사용하면 컨테이너가 제공하느 전략을 따라야한다.
+* 스프링 컨테이너의 기본전략
+    - 트랜잭션 범위의 영속성 컨텍스트 전략 => 트랜잭션의 범위와 영속성 컨텍스트의 생존범위가 같다
+    - filter interceptor -> controller -> view (준영속) / service -> repository (영속 및 트랜잭션 범위)
+    - 보통 비즈니스로직을 시작하는 Service layer에 @Transactional을 붙여서 시작하는데 이 어노테이션이 있으면 이 안에 있는 메소드를 호출하기전에 스프링의 트랜잭션 AOP가 먼저 동작함
+    - 이 스프링 트랜잭션 AOP는 호출하기전에 트랜잭션을 시작하고 대상 메소드가 종료되면 트랜잭션을 커밋하면서 종료함=> jpa는 영속성 컨텍스트를 플러시해서 변경 내용 DB에 반영 후 DB 트랜잭션 커밋
+    - 만약 예외 발생하면 롤백하고 종료, 이때 플러시 호출 안함
+    - ex) 컨트롤러에서 Service가 반환한 Member는 준영속상태임, 변경 감지와 지연로딩이 동작안하기때문에 미리 로딩이 안된 Team이 있을 경우에 Member.getTeam하면 예외 발생함
+    - => 준영속상태에서 지연로딩문제를 해결하려면은 크게 두가지 방법이 있음
+        - 뷰가 필요한 엔티티를 미리 로딩
+        - OSIV를 사용해서 엔티티를 항상 영속상태로 유지하는 방법
+    - 미리 로딩방법
+        - 글로벌 패치 전략 수정
+            - @ManyToOne(fetch = FetchType.EAGER)
+            - private Member member;
+            - order를 find하고 order.getMember().getName() // 이미 로딩된 데이터를 가져온다
+            - 단점
+            - N+1문제 발생, 사용하지않는 엔티티 로딩=> em.find(Order.class, id) 로 할때는 잘조회한다, JPQL을 사용해서 리스트를 가져올때 문제가 발생한다
+            - jpql을 분석해서 sql생성 -> db조회 후 결과 반환 -> 반환된 Order엔티티안에 eager패치전략이 되있는 Member확인 -> Member또조회 -> 다음 Order엔티티도 확인 -> 또조회 .. n회 반복
+            - => 패치 조인으로 해결 가능 ex) select o from Order o join fetch o.member -> 다만 프레젠테이션에 필요한 데이터가 다 다르므로 메소드를 두개 만들어야할수도있고 아니면 하나만 만들어서 한쪽이 살짝 비효율적으로 동작하도록 해야한다. 타협점을 잘 잡아야한다.
+        - 프록시 객체 강제로 초기화
+            - order.getMember().getname(); 강제로 초기화후 return order; 이것도 프레젠테이션계층의 요구에 따라 더 만들거나해서 비즈니스로직을 자꾸 간섭하게된다.
+            - 프록시 초기화 계층을 따로 만들어야겠다 -> FACADE(퍼사드) 계층이 그 역할을 해줄것임 
+            - ex) controller가 facade(초기화담당)를 호출하고 facade(초기화담당)는 service(원래기능)를 호출하고
+            - 대신 계층 하나 더생기고 코드 더 적어야함..
+        - 결론
+            - 지금까지 나온 방법으로는 코드 더 작성하고 번거롭고 에러가 발생하기 쉬워서 LazyInitializationExeption을 만나게 될 확률이 높아진다.
+            - 아무튼 모든 엔티티가 프레젠테이션계층에 있을때 준영속상태라는 것이다.
+    - OSIV(Open Session In View)
+        - 영속성 컨텍스트를 뷰까지 열어둔다는 뜻이다
+        - 따라서 뷰에서도 지연 로딩을 사용할 수 있다.
+        - OSIV는 하이버네이트에서 사용하는 용어고 JPA에서는 OEIV(Open EntityManager In View 이게 더 어감에 딱 맞는다) 라고 부른다. 관례상 둘다 OSIV라고 한다
+        - 영속성컨텍스트가 요청 전체에 걸쳐 열려있고 당연히 영속상태도 전체고 트랜잭션도 전체다. 보안문제로 패스워드 블러처리하고 전송하려고 setPassword(null)하면 어김없이 db에 적용된다.
+        - 해결점 => 프레젠테이션 계층에서 수정 못하게 막으면 된다.
+            - 방법1 : 엔티티를 읽기 전용 인터페이스로 제공, 서비스에서 MemberView(getter만 있는 인터페이스)형태로 반환 Member는 MemberView를 구현해야함
+            - 방법2 : 엔티티 래핑, 생성자로 엔티티를 받고 가지고있는 엔티티로 Getter만 있는 래퍼클래스를 만들어서 반환
+            - 방법3 : DTO만 반환, 전통적인 방법 return 할때 DTO를 사용해서
+            - 결론 : 코드양 증가함, 차라리 개발자들끼리 합의해서 프레젠테이션계층에서는 수정안하는게 더 나을 지경
+            - 이런 단점으로 인해서 안쓰는 추세였다가 최근 이런 문제점을 보완해서 비즈니스 계층에서만 트랜잭션을 유지하는 방식의 OSIV를 사용한다.
+            - 스프링 프레임워크가 제공하는 OSIV가 이 새로운 방식을 사용하는 OSIV다 
+    - 스프링프레임워크 OSIV 라이브러리
+        - 하이버네이트 OSIV 서블릿 필터
+        - 하이버네이트 OSIV 스프링 인터셉터
+        - JPA OEIV 서블릿 필터
+        - JPA OEIV 스프링 인터셉터
+        - 사용법
+            - 원하는 클래스를 넷중에 선택해서 사용하면되는데, 서블릿 필터는 서블릿필터에 등록하면되고, 인터셉터에 등록해야하는건 인터셉터에 등록하면된다
+        - 플로우
+            - Filter, InterCeptor -> Controller -> Service -> Repository
+            - (            영속상태 수정불가    )  (    영속상태 수정가능  )
+            - Fileter나 Interceptor로 다시 돌아왔을때 flush() 안하고 close만 하고 영속성 컨텍스트만 닫는다.
+        - 트랜잭션 없이 읽기 , 영속성 컨텍스트를 이용한 모든 변경은 트랜잭션 안에서 이루어져야함, 트랜잭션 없이 엔티티를 변경하고 영속성 컨텍스트를플러시 하면 TransactionRequiredException예외가 발생한다.
+        - 주의사항 : Member member = service.getMember(); member.setName("xxx"); service.someBiz(); 하면 문제가 된다. member.setName()을 맨 뒤로 보내든가 해야한다.
+            - 트랜잭션 롤백시 주의해야한다. 
+            - 성능 튜닝시 확인해야할 부분이 넓다
+
+
 ## ch14
 * 컬렉션과 부가기능
 ## ch15
