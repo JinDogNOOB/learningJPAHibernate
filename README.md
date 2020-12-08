@@ -1,5 +1,6 @@
 # learn hibernate
 * 교재 : 자바 ORM 표준 JPA 프로그래밍 - 김영한
+* git : https://github.com/holyeye/jpabook
 * n+1 문제 : 연관된 엔티티또 또 불러와서 일을 두번한다. 
     - (A)OneToMany(B) 를 필드로 가지고 있는 엔티티A를 조회했을때 
         - for(a : A) a.getB() 사용했을때
