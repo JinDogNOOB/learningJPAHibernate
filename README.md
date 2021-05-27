@@ -267,7 +267,7 @@
         - 첫번째 방법은 레포지토리에서 QueryDslPredicateExecutor를 상속받으면 된다.
         - ex) public interface ItemRepository extends JpaRepository<Item, Long>, QueryDslPredicateExecutor<Item>{}
         - 다만 join, fetch 를 사용할 수 없다. 사용하려면 JPAQuery를 직접 사용하거나 두번째방법 Support를 사용해야한다
-    - QueryDslPredicateSupport
+    - QueryDslRepositorySupport
         - QueryDSL의 모든 기능을 사용하려면 JPAQuery 객체를 직접생성해서 사용하면된다
         - 이때 스프링 데이터 JPA가 제공하는 Support 를 상속 받아 사용하면 더 편리하게 사용 가능하다
         - 스프링 데이터 JPA가 제공하는 공통 인터페이스는 직접 구현할 수 없기 때문에 따로 클래스를 만들어서 Support를 상속받고 사용해야한다.\

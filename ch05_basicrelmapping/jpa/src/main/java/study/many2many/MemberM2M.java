@@ -20,8 +20,8 @@ public class MemberM2M {
     @ManyToMany
     @JoinTable(
         name = "MEMBER_PRODUCT_M2M",
-        joinColumns = @JoinColumn(name="MEMBER_ID"),
-        inverseJoinColumns = @JoinColumn(name = "PRODUCT_ID") 
+        joinColumns = {@JoinColumn(name="MEMBER_ID")},
+        inverseJoinColumns = {@JoinColumn(name = "PRODUCT_ID")} 
         )
     private List<ProductM2M> products = new ArrayList<ProductM2M>();
 
