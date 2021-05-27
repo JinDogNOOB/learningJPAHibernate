@@ -253,6 +253,7 @@
     - Spring Data JPA는 스프링 프레임워크에서 jpa 를 편리하게 사용할 수 있도록 지원하는 프로젝트 위에 crud문제를 세련된 방법으로 해결
         - crud를 처리하기위한 공통 인터페이스 작성
         - 실행시점에 스프링 데이터 jpa 가 구현객체를 동적으로 생성해서 주입
+        - @EnableJpaRepository 이것도 아마 붙여야함
         - public interface MemberRepository extends JpaRepository<Member, Long>{
         - Member findByUsername(String username) ... 등등}
         - 스프링 데이터 jpa 가 메소드 이름을 분석해서 적절하게 만들어줌;;
